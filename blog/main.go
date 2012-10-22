@@ -5,7 +5,7 @@
 package main
 
 import (
-	"code.google.com/p/rsc/devweb/slave"
+	"github.com/petar/p/devweb/slave"
 	_ "github.com/petar/p/blog/post"
 )
 

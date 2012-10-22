@@ -135,7 +135,6 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	panic("daah")
 	ctxt := fs.NewContext(req)
 	ctxt.Criticalf("SERVING %s", req.URL.Path)
-	ctxt.Criticalf("OHOH %s", req.URL.Path)
 
 	defer func() {
 		if err := recover(); err != nil {

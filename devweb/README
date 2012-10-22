@@ -1,0 +1,5 @@
+When devweb compiles the target package, it places the compiled executanble in
+the directory devweb was itself invoked in (it's working directory).
+
+It proceeds to look for this executable in $PATH, therefore the local directory
+should be in $PATH. 

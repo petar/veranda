@@ -212,7 +212,7 @@ func buildProxy() (c net.Conn, proxy *cmdProxy, err error) {
 		p.active.kill()
 		p.active = nil
 
-		println("REBUILD")
+		println("REBUILD ", rootPackage)
 		out, err := exec.Command("go", "build", "-o", "prox.exe", rootPackage).CombinedOutput()
 		if len(out) > 0 {
 			return nil, nil, fmt.Errorf("%s", out)
