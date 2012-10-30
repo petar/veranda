@@ -77,8 +77,8 @@ type PostData struct {
 	PlusPage   string // Google+ Post ID for comment post
 	PlusAPIKey string // Google+ API key
 	PlusURL    string
-	HostURL string // host URL
-	Comments bool
+	HostURL    string // host URL
+	Comments   bool
 	
 	article string
 }
@@ -104,6 +104,7 @@ const owner = "petarm@gmail.com"
 const plusPetar = "115478988589452092148"
 const plusKey = "AIzaSyC7WQUkWnmx7WZQHZWuhjFzQbuCgnJzpl4"
 const feedID = "tag:5ttt.org,2012:5ttt.org"
+const publicURL = "http://blog.5ttt.org"
 
 var replacer = strings.NewReplacer(
 	"⁰", "<sup>0</sup>",
@@ -132,10 +133,11 @@ var replacer = strings.NewReplacer(
 )
 
 func serve(w http.ResponseWriter, req *http.Request) {
-	panic("daah")
 	ctxt := fs.NewContext(req)
 	ctxt.Criticalf("SERVING %s", req.URL.Path)
 
+	// If a panic occurs in the user logic, 
+	// catch it, log it and return a 500 error.
 	defer func() {
 		if err := recover(); err != nil {
 			var buf bytes.Buffer
@@ -148,11 +150,14 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	}()
 
 	p := path.Clean("/" + req.URL.Path)
-/*
+
+	// If the site is accessed via its appspot URL, redirect to the cutsom URL
+	// to make sure links on the site are not broken.
+	/*
 	if strings.Contains(req.Host, "appspot.com") {
 		http.Redirect(w, req, "http://research.swtch.com" + p, http.StatusFound)
-	}
-*/	
+	}*/
+	
 	if p != req.URL.Path {
 		http.Redirect(w, req, p, http.StatusFound)
 		return
@@ -164,17 +169,21 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	user := ctxt.User()
-	isOwner := ctxt.User() == owner || len(os.Args) >= 2 && os.Args[1] == "LISTEN_STDIN" // Owner in AppEngine or using devweb
+	// isOwner = owner in AppEngine or using devweb
+	isOwner := ctxt.User() == owner || len(os.Args) >= 2 && os.Args[1] == "LISTEN_STDIN"
+	
+	// URL is a slash (AppEngine, dev mode or draft mode)
 	if p == "" || p == "/" || p == "/draft" {
 		if p == "/draft" && user == "?" {
 			ctxt.Criticalf("/draft loaded by %s", user)
 			notfound(ctxt, w, req)
 			return
 		}
-		toc(w, req, p == "/draft", isOwner, user)
+		toc(w, req, p == "/draft", isOwner, user) // ??
 		return
 	}
 
+	// draft = we are in draft mode, and only if we have credentials
 	draft := false
 	if strings.HasPrefix(p, "/draft/") {
 		if user == "?" {
@@ -186,16 +195,23 @@ func serve(w http.ResponseWriter, req *http.Request) {
 		p = p[len("/draft"):]
 	}
 
+	/*
+	// There are no valid URLs with slashes after the root or draft part of the URL.
+	// We disable this, since we would like to be able to serve the whole MathJax tree statically.
 	if strings.Contains(p[1:], "/") {
 		notfound(ctxt, w, req)
 		return
 	}
+	*/
 
+	// If the path contains dots, it is interpreted as a static file
 	if strings.Contains(p, ".") {
-		// Let Google's front end servers cache static
-		// content for a short amount of time.
-		httpCache(w, 5*time.Minute)
-		ctxt.ServeFile(w, req, "blog/static/"+p)
+		// Let Google's front end servers cache static content for a short amount of time.
+		// httpCache simply adds a caching directive in the HTTP response
+
+		// Disable temporarily while fiddling with CSS files
+		//httpCache(w, 5*time.Minute)
+		ctxt.ServeFile(w, req, "blog/static/" + p)
 		return
 	}
 
@@ -267,8 +283,6 @@ func loadPost(c *fs.Context, name string, req *http.Request) (meta *PostData, ar
 		HostURL:    hostURL(req),
 	}
 
-	panic("blog/post/" + name) // petar
-
 	art, fi, err := c.Read("blog/post/" + name)
 	if err != nil {
 		return nil, "", err
@@ -297,9 +311,11 @@ func (x byTime) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 func (x byTime) Less(i, j int) bool { return x[i].Date.Time.After(x[j].Date.Time) }
 
 type TocData struct {
-	Draft bool
-	HostURL string
-	Posts []*PostData
+	User     string
+	Draft    bool
+	HostURL  string
+	RootPath string
+	Posts    []*PostData
 }
 
 func toc(w http.ResponseWriter, req *http.Request, draft bool, isOwner bool, user string) {
@@ -377,9 +393,19 @@ func toc(w http.ResponseWriter, req *http.Request, draft bool, isOwner bool, use
 			c.Criticalf("write blogcache: %v", err)
 		}
 
+		var rootpath = "/"
+		if draft {
+			rootpath = "/draft"
+		}
 		var buf bytes.Buffer
 		t := mainTemplate(c)
-		if err := t.Lookup("toc").Execute(&buf, &TocData{draft, hostURL(req), all}); err != nil {
+		if err := t.Lookup("toc").Execute(&buf, &TocData{
+			User:     c.User(),
+			Draft:    draft, 
+			HostURL:  hostURL(req), 
+			RootPath: rootpath,
+			Posts:    all,
+		}); err != nil {
 			panic(err)
 		}
 		data = buf.Bytes()
@@ -389,10 +415,15 @@ func toc(w http.ResponseWriter, req *http.Request, draft bool, isOwner bool, use
 }
 
 func hostURL(req *http.Request) string {
+	/*
 	if strings.HasPrefix(req.Host, "localhost") {
 		return "http://localhost:8080"
 	}
-	return "http://research.swtch.com"
+	*/
+	if strings.Index(req.Host, "localhost") >= 0 {
+		return "http://localhost:8000"
+	}
+	return publicURL
 }
 
 func atomfeed(w http.ResponseWriter, req *http.Request) {
