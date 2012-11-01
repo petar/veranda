@@ -24,7 +24,7 @@ import (
 )
 
 func init() {
-	fs.Root = os.Getenv("HOME") + "/5ttt.org-appfs/"
+	fs.Root = os.Getenv("HOME") + "/appfs.maymounkov.org/"
 	http.HandleFunc("/", serve)
 	http.Handle("/feeds/posts/default", http.RedirectHandler("/feed.atom", http.StatusFound))
 }
@@ -100,11 +100,11 @@ func (d *PostData) IsDraft() bool {
 // https://www.googleapis.com/plus/v1/people/116810148281701144465/activities/public?key=AIzaSyB_JO6hyAJAL659z0Dmu0RUVVvTx02ZPMM
 //
 
-const owner = "petarm@gmail.com"
+const owner = "petar@maymounkov.org"
 const plusPetar = "115478988589452092148"
 const plusKey = "AIzaSyC7WQUkWnmx7WZQHZWuhjFzQbuCgnJzpl4"
-const feedID = "tag:5ttt.org,2012:5ttt.org"
-const publicURL = "http://blog.5ttt.org"
+const feedID = "tag:maymounkov.org,2012:maymounkov.org"
+const publicURL = "http://maymounkov.org"
 
 var replacer = strings.NewReplacer(
 	"⁰", "<sup>0</sup>",
