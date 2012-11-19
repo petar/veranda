@@ -7,7 +7,10 @@ import (
 	"appengine"
 	"appengine/memcache"
 
+	// The appfs server, running on AppEngine, reads the user and password from
+	// the file "/.password" within appfs.
 	_ "code.google.com/p/rsc/appfs/server"
+
 	_ "github.com/petar/p/blog/post"
 )
 

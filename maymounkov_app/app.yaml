@@ -2,9 +2,9 @@
 # ~/google_appengine/dev_appserver.py --high_replication tmp
 # ~/google_appengine/appcfg.py update tmp
 
-application: maymounkov-app
+application: maymounkov-org
 runtime: go
-version: test
+version: n1
 api_version: go1
 
 handlers:
