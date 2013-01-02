@@ -5,9 +5,9 @@
 package main
 
 import (
-	"github.com/petar/p/devweb/slave"
-	_ "github.com/petar/p/blog/post"
-	//_"code.google.com/p/rsc/appfs/server"
+	"github.com/petar/veranda/devweb/slave"
+	_ "github.com/petar/veranda/blog/post"
+	//_"code.google.com/veranda/rsc/appfs/server"
 )
 
 func main() {

@@ -25,6 +25,7 @@ import (
 
 func init() {
 	fs.Root = os.Getenv("HOME") + "/appfs.maymounkov.org/"
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(path.Join(os.Getenv("HOME"), "g0/src/github.com/petar/veranda/maymounkov_app/static/")))))
 	http.HandleFunc("/", serve)
 	http.Handle("/feeds/posts/default", http.RedirectHandler("/feed.atom", http.StatusFound))
 }
@@ -32,6 +33,7 @@ func init() {
 var funcMap = template.FuncMap{
 	"now":  time.Now,
 	"date": timeFormat,
+	"join": path.Join,
 }
 
 func timeFormat(fmt string, t time.Time) string {
@@ -42,6 +44,7 @@ type blogTime struct {
 	time.Time
 }
 
+// Time formats, tried while parsing the Date field in a post
 var timeFormats = []string{
 	time.RFC3339,
 	"Monday, January 2, 2006",
@@ -70,6 +73,7 @@ type PostData struct {
 	OldURL   string
 	Summary  string
 	Favorite bool
+	NotInTOC bool
 	
 	Reader []string
 
@@ -100,11 +104,14 @@ func (d *PostData) IsDraft() bool {
 // https://www.googleapis.com/plus/v1/people/116810148281701144465/activities/public?key=AIzaSyB_JO6hyAJAL659z0Dmu0RUVVvTx02ZPMM
 //
 
-const owner = "petar@maymounkov.org"
-const plusPetar = "115478988589452092148"
-const plusKey = "AIzaSyC7WQUkWnmx7WZQHZWuhjFzQbuCgnJzpl4"
-const feedID = "tag:maymounkov.org,2012:maymounkov.org"
-const publicURL = "http://maymounkov.org"
+const (
+	devOwner  = "test@example.com"
+	owner     = "petar@maymounkov.org"
+	plusPetar = "115478988589452092148"
+	plusKey   = "AIzaSyC7WQUkWnmx7WZQHZWuhjFzQbuCgnJzpl4"
+	feedID    = "tag:maymounkov.org,2012:maymounkov.org"
+	publicURL = "http://maymounkov.org"
+)
 
 var replacer = strings.NewReplacer(
 	"⁰", "<sup>0</sup>",
@@ -170,7 +177,8 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	
 	user := ctxt.User()
 	// isOwner = owner in AppEngine or using devweb
-	isOwner := ctxt.User() == owner || len(os.Args) >= 2 && os.Args[1] == "LISTEN_STDIN"
+	// test@example.com
+	isOwner := ctxt.User() == owner || ctxt.User() == devOwner || len(os.Args) >= 2 && os.Args[1] == "LISTEN_STDIN"
 	
 	// URL is a slash (AppEngine, dev mode or draft mode)
 	if p == "" || p == "/" || p == "/draft" {
@@ -311,11 +319,12 @@ func (x byTime) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 func (x byTime) Less(i, j int) bool { return x[i].Date.Time.After(x[j].Date.Time) }
 
 type TocData struct {
-	User     string
-	Draft    bool
-	HostURL  string
-	RootPath string
-	Posts    []*PostData
+	User      string
+	Draft     bool
+	HostURL   string
+	DraftRoot string	// Base URL+path of draft articles
+	PostRoot  string	// Base URL+path of published articles
+	Posts     []*PostData
 }
 
 func toc(w http.ResponseWriter, req *http.Request, draft bool, isOwner bool, user string) {
@@ -381,7 +390,7 @@ func toc(w http.ResponseWriter, req *http.Request, draft bool, isOwner bool, use
 		var all []*PostData
 		for meta := range ch {
 			postCache[meta.Name] = meta
-			if meta.IsDraft() == draft && (!draft || isOwner || meta.canRead(user)) {
+			if ((!draft && !meta.IsDraft() && !meta.NotInTOC) || (isOwner && draft) || meta.canRead(user)) {
 				all = append(all, meta)
 			}
 		}
@@ -393,18 +402,15 @@ func toc(w http.ResponseWriter, req *http.Request, draft bool, isOwner bool, use
 			c.Criticalf("write blogcache: %v", err)
 		}
 
-		var rootpath = "/"
-		if draft {
-			rootpath = "/draft"
-		}
 		var buf bytes.Buffer
 		t := mainTemplate(c)
 		if err := t.Lookup("toc").Execute(&buf, &TocData{
-			User:     c.User(),
-			Draft:    draft, 
-			HostURL:  hostURL(req), 
-			RootPath: rootpath,
-			Posts:    all,
+			User:      c.User(),
+			Draft:     draft, 
+			HostURL:   hostURL(req), 
+			DraftRoot: "/draft",
+			PostRoot:  "/",
+			Posts:     all,
 		}); err != nil {
 			panic(err)
 		}
@@ -470,7 +476,7 @@ func atomfeed(w http.ResponseWriter, req *http.Request) {
 			Author: &atom.Person{
 				Name: "Petar Maymounkov",
 				URI: "https://plus.google.com/" + plusPetar,
-				Email: "petar@5ttt.org",
+				Email: "petar@maymounkov.org",
 			},
 			Link: []atom.Link{
 				{Rel: "self", Href: hostURL(req) + "/feed.atom"},

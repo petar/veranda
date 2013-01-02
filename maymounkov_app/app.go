@@ -11,7 +11,7 @@ import (
 	// the file "/.password" within appfs.
 	_ "code.google.com/p/rsc/appfs/server"
 
-	_ "github.com/petar/p/blog/post"
+	_ "github.com/petar/veranda/blog/post"
 )
 
 func init() {

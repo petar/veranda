@@ -1,0 +1,20 @@
+DEV
+
+Make sure not to put the Google AppEngine Go compiler into your path.
+If "go" refers to it silently, it will be confusing when trying to compile
+normal packages.
+
+Pre-package the project for appengine manipulations
+	% mkapp
+	
+Start a local appengine sandbox
+	% ~/google_appengine/dev_appserver.py --high_replication tmp
+
+Copy appfs data to devserver sandbox
+	% appmount -u dummy -p dummy /mnt/appfs
+	% cp -R appfs/blog* /mnt/appfs
+
+DEPLOY
+
+Update the appengine server with the newest app code
+	% ~/google_appengine/appcfg.py update tmp

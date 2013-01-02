@@ -8,6 +8,8 @@ version: n1
 api_version: go1
 
 handlers:
+#- url: /static
+#  static_dir: static
 - url: /\.appfs.*
   script: _go_app
   secure: always
