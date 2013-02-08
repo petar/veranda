@@ -34,6 +34,7 @@ var funcMap = template.FuncMap{
 	"now":  time.Now,
 	"date": timeFormat,
 	"join": path.Join,
+	"logged": func(user string) bool { return user != "?" && user != "" },
 }
 
 func timeFormat(fmt string, t time.Time) string {
@@ -101,12 +102,12 @@ func (d *PostData) IsDraft() bool {
 }
 
 // To find PlusPage value:
-// https://www.googleapis.com/plus/v1/people/116810148281701144465/activities/public?key=AIzaSyB_JO6hyAJAL659z0Dmu0RUVVvTx02ZPMM
+// https://www.googleapis.com/plus/v1/people/115478988589452092148/activities/public?key=AIzaSyC7WQUkWnmx7WZQHZWuhjFzQbuCgnJzpl4
 //
 
 const (
-	devOwner  = "test@example.com"
-	owner     = "petar@maymounkov.org"
+	devOwner  = "xxx"
+	owner     = "petarm"
 	plusPetar = "115478988589452092148"
 	plusKey   = "AIzaSyC7WQUkWnmx7WZQHZWuhjFzQbuCgnJzpl4"
 	feedID    = "tag:maymounkov.org,2012:maymounkov.org"
