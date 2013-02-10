@@ -4,8 +4,8 @@
 
 application: maymounkov-org
 runtime: go
-version: n1
 api_version: go1
+version: n1
 
 handlers:
 #- url: /static
