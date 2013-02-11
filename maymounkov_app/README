@@ -1,3 +1,16 @@
+GAE
+
+Prepare .password:
+
+% go run mkpass.go [user] [password]
+
+% appfile -h maymounkov-org.appspot.com -u dummy -p dummy mkfs
+
+% appmount -h maymounkov-org.appspot.com -u dummy -p dummy /mnt/appfs
+
+# Use 'maymounkov-org.appspot.com' with 'appfile' and 'appmount', maymounkov.org does not work due to SSL stuffs
+
+
 DEV
 
 Make sure not to put the Google AppEngine Go compiler into your path.
