@@ -1,0 +1,24 @@
+# DEPLOYING APPFS
+# ===============
+
+# Prepare a new password file
+go run mkpass.go $USER $PASSWORD > .password
+
+APP=maymounkov-org
+
+# Make the file system on the APPFS server
+appfile -h $APP.appspot.com -u dummy -p dummy mkfs
+
+# Replace the default password file
+appfile -h $APP.appspot.com -u dummy -p dummy write /.password < .password
+
+# Prepare a mount point for the APPFS locally
+mkdir -p /mnt/appfs.$APP
+umount /mnt/appfs.$APP
+
+# Mount the APPFS locally
+appmount -h $APP.appspot.com -u $USER -p $PASSWORD /mnt/appfs.$APP
+cp -R $HOME/appfs.$APP/* /mnt/appfs.$APP/
+
+# Optionally, unmount the local APPFS mount
+umount /mnt/appfs.$APP

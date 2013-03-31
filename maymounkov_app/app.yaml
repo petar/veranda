@@ -1,6 +1,5 @@
-`# mkapp
-# ~/google_appengine/dev_appserver.py --high_replication tmp
-# ~/google_appengine/appcfg.py update tmp
+# ~/google_appengine/dev_appserver.py --high_replication .
+# ~/google_appengine/appcfg.py update .
 
 application: maymounkov-org
 runtime: go
