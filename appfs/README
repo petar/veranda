@@ -2,9 +2,12 @@
 # ===============
 
 # Prepare a new password file
-go run mkpass.go $USER $PASSWORD > .password
+mkpass $USER $PASSWORD > .password
 
 APP=maymounkov-org
+
+# All host specs after -h below, must refer to the *.appspot.com name of the site, not their custom domain.
+# Using the latter produces SSL certificate errors.
 
 # Make the file system on the APPFS server
 appfile -h $APP.appspot.com -u dummy -p dummy mkfs
@@ -15,6 +18,9 @@ appfile -h $APP.appspot.com -u dummy -p dummy write /.password < .password
 # Prepare a mount point for the APPFS locally
 mkdir -p /mnt/appfs.$APP
 umount /mnt/appfs.$APP
+
+# The next step may not work right away, until AppEngine builds an index for the datasore
+# You can monoitor the progress in the app console in Datastore Indexes
 
 # Mount the APPFS locally
 appmount -h $APP.appspot.com -u $USER -p $PASSWORD /mnt/appfs.$APP
