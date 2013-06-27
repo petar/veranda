@@ -1,0 +1,125 @@
+package main
+
+import (
+	"bytes"
+	"flag"
+	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
+)
+
+func usage() {
+	fatal("gojail push|pop [push_index]")
+}
+
+func main() {
+	flag.Parse()
+	if flag.NArg() < 1 {
+		usage()
+	}
+	switch flag.Arg(0) {
+	case "push":
+		var gopath string
+		r := roots()
+		switch len(r) {
+		case 0:
+			fatal("not within a gojail")
+		case 1:
+			gopath = r[0]
+		default:
+			if flag.NArg() != 2 {
+				println("which gojail?\n")
+				fatalChoice(r)
+			}
+			i, err := strconv.Atoi(flag.Arg(1))
+			if err != nil {
+				println("use an integral 0-based index\n")
+				fatalChoice(r)
+			}
+			if i >= len(r) {
+				println("index too big\n")
+				fatalChoice(r)
+			}
+			gopath = r[i]
+		}
+		push(gopath)
+	case "pop":
+		pop()
+	default:
+		usage()
+	}
+}
+
+func pop() {
+	gp := filepath.SplitList(os.Getenv("GOPATH"))
+	if len(gp) == 0 {
+		fatal("no gopaths on stack")
+	}
+	println("removing ", gp[len(gp)-1])
+	gp = gp[:len(gp)-1]
+	fmt.Printf("export GOPATH='%s'\n", join(gp...))
+}
+
+func push(g string) {
+	println("adding ", g)
+	gp := filepath.SplitList(os.Getenv("GOPATH"))
+	gp = append(gp, g)
+	fmt.Printf("export GOPATH='%s'\n", join(gp...))
+}
+
+func join(gg ...string) string {
+	var w bytes.Buffer
+	for i, g := range gg {
+		if i > 0 {
+			w.WriteRune(filepath.ListSeparator)
+		}
+		w.WriteString(g)
+	}
+	return string(w.Bytes())
+}
+
+func fatalChoice(r []string) {
+	for i, j := range r {
+		fmt.Fprintf(os.Stderr, "%d: %s\n", i, j)
+	}
+	os.Exit(1)
+}
+
+func roots() []string {
+	var r []string
+	wd, err := os.Getwd()
+	pie(err)	
+	p := strings.Split(path.Clean(wd), "/")
+	if len(p) == 0 || p[0] != "" {
+		fatal("working directory not absolute")
+	}
+	p = p[1:]
+	for i, _ := range p {
+		g := path.Join(p[:len(p)-i]...)
+		g = "/" + g
+		if isGoJail(g) {
+			r = append(r, g)
+		}
+	}
+	return r
+}
+
+func isGoJail(p string) bool {
+	_, err := os.Stat(path.Join(p, ".gojail"))
+	return err == nil
+}
+
+func pie(e error) {
+	if e == nil {
+		return
+	}
+	fatal(e)
+}
+
+func fatal(v ...interface{}) {
+	fmt.Fprintln(os.Stderr, v...)
+	os.Exit(1)
+}
