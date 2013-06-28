@@ -54,20 +54,42 @@ func main() {
 }
 
 func pop() {
-	gp := filepath.SplitList(os.Getenv("GOPATH"))
-	if len(gp) == 0 {
-		fatal("no gopaths on stack")
+	x, x0 := popvar("GOPATH")
+	if x0 == "" {
+		fatal("nothing on GOPATH stack")
 	}
-	println("removing ", gp[len(gp)-1])
-	gp = gp[:len(gp)-1]
-	fmt.Printf("export GOPATH='%s'\n", join(gp...))
+	y, y0 := popvar("PATH")
+	if y0 == "" {
+		fatal("nothing on PATH stack")
+	}
+	if !strings.HasPrefix(y0, x0) {
+		fatal("PATH and GOPATH don't match")
+	}
+	fmt.Println(x)
+	fmt.Println(y)
 }
 
-func push(g string) {
-	println("adding ", g)
-	gp := filepath.SplitList(os.Getenv("GOPATH"))
-	gp = append(gp, g)
-	fmt.Printf("export GOPATH='%s'\n", join(gp...))
+func popvar(k string) (cmd, chopped string) {
+	gp := filepath.SplitList(os.Getenv(k))
+	if len(gp) == 0 {
+		return "", ""
+	}
+	println("removing", gp[len(gp)-1], "from", k)
+	chopped = gp[len(gp)-1]
+	gp = gp[:len(gp)-1]
+	return fmt.Sprintf("export %s=%s", k, join(gp...)), chopped
+}
+
+func push(v string) {
+	pushvar("GOPATH", v)
+	pushvar("PATH", path.Join(v, "bin"))
+}
+
+func pushvar(k, v string) {
+	println("adding", v, "to", k)
+	gp := filepath.SplitList(os.Getenv(k))
+	gp = append(gp, v)
+	fmt.Printf("export %s=%s\n", k, join(gp...))
 }
 
 func join(gg ...string) string {
