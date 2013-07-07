@@ -55,7 +55,8 @@ func main() {
 }
 
 func peek() {
-	for i := 0; ; i++ {
+	var i int
+	for i = 0; ; i++ {
 		x := peekvar("GOPATH")
 		if x == "" {
 			break
@@ -67,11 +68,12 @@ func peek() {
 		if !strings.HasPrefix(y, x) {
 			break
 		}
-		if i > 0 {
-			fmt.Println("——————")
-		}
-		fmt.Println("GOPATH", x)
-		fmt.Println("PATH  ", y)
+		fmt.Println("-------+----------------------------------------")
+		fmt.Println("GOPATH |", x)
+		fmt.Println("PATH   |", y)
+	}
+	if i > 0 {
+		fmt.Println("-------+----------------------------------------")
 	}
 }
 
