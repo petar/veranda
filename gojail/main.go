@@ -18,7 +18,8 @@ func usage() {
 func main() {
 	flag.Parse()
 	if flag.NArg() < 1 {
-		usage()
+		peek()
+		return
 	}
 	switch flag.Arg(0) {
 	case "push":
@@ -51,6 +52,39 @@ func main() {
 	default:
 		usage()
 	}
+}
+
+func peek() {
+	for {
+		x := peekvar("GOPATH")
+		if x == "" {
+			break
+		}
+		y := peekvar("PATH")
+		if y == "" {
+			break
+		}
+		if !strings.HasPrefix(y, x) {
+			break
+		}
+		fmt.Println(x, " • ", y)
+	}
+}
+
+var osenv = make(map[string][]string)
+
+func peekvar(k string) (chopped string) {
+	v, ok := osenv[k]
+	if !ok {
+		v = filepath.SplitList(os.Getenv(k))
+		osenv[k] = v
+	}
+	if len(v) == 0 {
+		return ""
+	}
+	chopped, v = v[len(v)-1], v[:len(v)-1]
+	osenv[k] = v
+	return chopped
 }
 
 func pop() {
