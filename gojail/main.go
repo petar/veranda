@@ -67,7 +67,7 @@ func peek() {
 		if !strings.HasPrefix(y, x) {
 			break
 		}
-		fmt.Println(x, " • ", y)
+		fmt.Println(x, "•", y)
 	}
 }
 
