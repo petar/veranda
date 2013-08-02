@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 	usr, pwd, err := keychain.UserPasswd(*flagServer, *flagUser)
 	if err != nil {
-		println("Bad luck:", err.Error())
+		println(err.Error())
 		os.Exit(1)
 	}
 	fmt.Printf("Server=%s User=%s Password=%s\n", *flagServer, usr, pwd)
