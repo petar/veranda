@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
+	//"strconv"
 	"strings"
 )
 
@@ -28,8 +28,9 @@ func main() {
 		switch len(r) {
 		case 0:
 			fatal("not within a gojail")
-		case 1:
+		default: // case 1:
 			gopath = r[0]
+		/*
 		default:
 			if flag.NArg() != 2 {
 				println("which gojail?\n")
@@ -45,6 +46,7 @@ func main() {
 				fatalChoice(r)
 			}
 			gopath = r[i]
+			*/
 		}
 		push(gopath)
 	case "pop":
