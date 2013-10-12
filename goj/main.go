@@ -1,3 +1,4 @@
+// Program goj, short for "go jail", is a utility for managing GOPATH variables, useful when working with multiple copies of the same source repo.
 package main
 
 import (
@@ -12,7 +13,7 @@ import (
 )
 
 func usage() {
-	fatal("gojail push|pop [push_index]")
+	fatal("goj +|-|. [index of jail, if multiple]")
 }
 
 func main() {
@@ -22,7 +23,7 @@ func main() {
 		return
 	}
 	switch flag.Arg(0) {
-	case "push":
+	case "+":
 		var gopath string
 		r := roots()
 		switch len(r) {
@@ -49,11 +50,28 @@ func main() {
 			*/
 		}
 		push(gopath)
-	case "pop":
+	case "-":
 		pop()
+	case ".":
+		current()
 	default:
 		usage()
 	}
+}
+
+func current() {
+	wd, err := os.Getwd()
+	if err != nil {
+		fatal(err.Error())
+	}
+	for _, gp := range filepath.SplitList(os.Getenv("GOPATH")) {
+		gp = path.Clean(gp)
+		if strings.HasPrefix(wd, gp) {
+			fmt.Println(gp)
+			os.Exit(0)
+		}
+	}
+	os.Exit(1)
 }
 
 func peek() {
