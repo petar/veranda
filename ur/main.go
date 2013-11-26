@@ -16,7 +16,7 @@ func main() {
 	for scanner.Scan() {
 		u, err := strconv.ParseUint(scanner.Text(), 16, 32)
 		if err != nil {
-			log.Printf("parse rune hex rep'n")
+			log.Printf("⟦☹⟧")
 			continue
 		}
 		p := make([]byte, 4)
